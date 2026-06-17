@@ -33,7 +33,8 @@ function createInitialUnits() {
     const treatedQuality = calculateTreatedWater(
       currentQuality,
       unitId,
-      SIMULATION_CONFIG.defaultAerationIntensity
+      SIMULATION_CONFIG.defaultAerationIntensity,
+      SIMULATION_CONFIG.defaultInflowRate
     );
     
     units[unitId] = {
@@ -122,7 +123,8 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
       const treatedQuality = calculateTreatedWater(
         inletToUnit,
         unitId,
-        state.aerationIntensity
+        state.aerationIntensity,
+        state.inflowRate
       );
 
       const newWaterLevel = calculateWaterLevelChange(
@@ -131,7 +133,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
         state.inflowRate
       );
 
-      const qualityCheck = checkWaterQuality(treatedQuality, state.standard);
+      const qualityCheck = checkWaterQuality(treatedQuality, state.standard, state.standard.name);
       const unitHasAlert = !qualityCheck.isCompliant && index === TREATMENT_UNIT_ORDER.length - 1;
 
       if (unitHasAlert) {

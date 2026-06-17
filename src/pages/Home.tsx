@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { TreatmentPlant } from '../components/Scene/TreatmentPlant';
 import { ParameterControls } from '../components/ControlPanel/ParameterControls';
 import { StandardConfig } from '../components/ControlPanel/StandardConfig';
@@ -18,6 +19,10 @@ export default function Home() {
   const setShowDailyReport = useSimulationStore((state) => state.setShowDailyReport);
   const selectUnit = useSimulationStore((state) => state.selectUnit);
   const generateReport = useSimulationStore((state) => state.generateReport);
+
+  useEffect(() => {
+    (window as any).simulationStore = useSimulationStore;
+  }, []);
 
   useSimulationLoop();
 

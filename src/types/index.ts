@@ -43,6 +43,7 @@ export interface AlertRecord {
   value: number;
   limit: number;
   timestamp: number;
+  standardName: string;
 }
 
 export interface DailyReport {

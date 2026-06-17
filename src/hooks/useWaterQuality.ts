@@ -74,6 +74,19 @@ export function useWaterQuality(unitId?: TreatmentUnitType) {
     return qualityHistory.filter(h => h.unitId === unitId).slice(-50);
   }, [unitId, qualityHistory]);
 
+  const inletQuality = useMemo(() => {
+    if (!unitId) return null;
+    const unitIndex = TREATMENT_UNIT_ORDER.indexOf(unitId);
+    if (unitIndex === 0) return units[TREATMENT_UNIT_ORDER[0]].waterQuality;
+    const previousUnitId = TREATMENT_UNIT_ORDER[unitIndex - 1];
+    return units[previousUnitId].waterQuality;
+  }, [unitId, units]);
+
+  const outletQuality = useMemo(() => {
+    if (!unitId) return null;
+    return units[unitId].waterQuality;
+  }, [unitId, units]);
+
   return {
     currentQuality,
     isAlert,
@@ -83,5 +96,7 @@ export function useWaterQuality(unitId?: TreatmentUnitType) {
     parameterStatus,
     historyForUnit,
     parameterInfo: PARAMETER_INFO,
+    inletQuality,
+    outletQuality,
   };
 }

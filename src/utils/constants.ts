@@ -164,8 +164,8 @@ export const UNIT_CONFIGS: Record<TreatmentUnitType, Omit<TreatmentUnit, 'waterQ
 
 export const SIMULATION_CONFIG = {
   tickInterval: 100,
-  waterLevelChangeRate: 0.02,
-  qualityUpdateRate: 0.1,
+  waterLevelChangeRate: 0.08,
+  qualityUpdateRate: 0.3,
   minInflowRate: 10,
   maxInflowRate: 200,
   defaultInflowRate: 100,

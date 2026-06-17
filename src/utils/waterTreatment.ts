@@ -4,28 +4,35 @@ import { TREATMENT_EFFICIENCY, TREATMENT_UNIT_ORDER, SIMULATION_CONFIG } from '.
 export function calculateTreatedWater(
   inletQuality: WaterQuality,
   unitType: TreatmentUnitType,
-  aerationIntensity: number
+  aerationIntensity: number,
+  inflowRate: number = 100
 ): WaterQuality {
   const baseEfficiency = TREATMENT_EFFICIENCY[unitType];
-  const aerationFactor = unitType === 'aerationTank' ? 0.5 + (aerationIntensity / 100) * 0.5 : 1;
+  const aerationFactor = unitType === 'aerationTank' 
+    ? 0.3 + (aerationIntensity / 100) * 0.7 
+    : 1;
+  
+  const inflowFactor = Math.max(0.6, 1.4 - (inflowRate / 200) * 0.8);
 
-  const codRemoval = baseEfficiency.cod * aerationFactor;
-  const ammoniaRemoval = baseEfficiency.ammoniaNitrogen * aerationFactor;
-  const phosphorusRemoval = baseEfficiency.totalPhosphorus * aerationFactor;
+  const codRemoval = baseEfficiency.cod * aerationFactor * inflowFactor;
+  const ammoniaRemoval = baseEfficiency.ammoniaNitrogen * aerationFactor * inflowFactor;
+  const phosphorusRemoval = baseEfficiency.totalPhosphorus * aerationFactor * inflowFactor;
 
   return {
     cod: Math.max(5, inletQuality.cod * (1 - codRemoval)),
     ammoniaNitrogen: Math.max(0.1, inletQuality.ammoniaNitrogen * (1 - ammoniaRemoval)),
     totalPhosphorus: Math.max(0.05, inletQuality.totalPhosphorus * (1 - phosphorusRemoval)),
-    ph: inletQuality.ph + (Math.random() - 0.5) * 0.2,
+    ph: inletQuality.ph + (Math.random() - 0.5) * 0.3,
   };
 }
 
 export function checkWaterQuality(
   quality: WaterQuality,
-  standard: DischargeStandard
+  standard: DischargeStandard,
+  standardName?: string
 ): { isCompliant: boolean; violations: AlertRecord[] } {
   const violations: AlertRecord[] = [];
+  const name = standardName || standard.name;
 
   if (quality.cod > standard.cod) {
     violations.push({
@@ -34,6 +41,7 @@ export function checkWaterQuality(
       value: quality.cod,
       limit: standard.cod,
       timestamp: Date.now(),
+      standardName: name,
     });
   }
 
@@ -44,6 +52,7 @@ export function checkWaterQuality(
       value: quality.ammoniaNitrogen,
       limit: standard.ammoniaNitrogen,
       timestamp: Date.now(),
+      standardName: name,
     });
   }
 
@@ -54,6 +63,7 @@ export function checkWaterQuality(
       value: quality.totalPhosphorus,
       limit: standard.totalPhosphorus,
       timestamp: Date.now(),
+      standardName: name,
     });
   }
 
@@ -64,6 +74,7 @@ export function checkWaterQuality(
       value: quality.ph,
       limit: quality.ph < standard.phMin ? standard.phMin : standard.phMax,
       timestamp: Date.now(),
+      standardName: name,
     });
   }
 
@@ -98,10 +109,22 @@ export function calculateComplianceRate(
 
 export function getWaterColor(cod: number): string {
   const normalizedCod = Math.min(1, Math.max(0, (cod - 5) / 295));
-  const r = Math.round(139 - normalizedCod * 80);
-  const g = Math.round(69 + normalizedCod * 127);
-  const b = Math.round(19 + normalizedCod * 100);
-  return `rgb(${r}, ${g}, ${b})`;
+  
+  if (normalizedCod < 0.2) {
+    return `rgb(46, ${196 + Math.round((0.2 - normalizedCod) * 5 * 30)}, 182)`;
+  } else if (normalizedCod < 0.4) {
+    const t = (normalizedCod - 0.2) / 0.2;
+    return `rgb(${Math.round(46 + t * 60)}, ${Math.round(226 - t * 40)}, ${Math.round(182 - t * 80)})`;
+  } else if (normalizedCod < 0.6) {
+    const t = (normalizedCod - 0.4) / 0.2;
+    return `rgb(${Math.round(106 + t * 30)}, ${Math.round(186 - t * 30)}, ${Math.round(102 - t * 40)})`;
+  } else if (normalizedCod < 0.8) {
+    const t = (normalizedCod - 0.6) / 0.2;
+    return `rgb(${Math.round(136 + t * 40)}, ${Math.round(156 - t * 40)}, ${Math.round(62 - t * 30)})`;
+  } else {
+    const t = (normalizedCod - 0.8) / 0.2;
+    return `rgb(${Math.round(176 + t * 50)}, ${Math.round(116 - t * 40)}, ${Math.round(32 - t * 10)})`;
+  }
 }
 
 export function interpolateWaterQuality(

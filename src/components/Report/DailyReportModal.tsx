@@ -16,7 +16,7 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
   if (!report) return null;
 
   const handleExport = () => {
-    const csvContent = exportReportToCSV(report);
+    const csvContent = exportReportToCSV(report, standard);
     downloadCSV(csvContent, `污水处理日报_${report.date}.csv`);
   };
 
@@ -185,6 +185,9 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
                   <div className="flex items-center gap-3">
                     <span className="text-red-400 font-medium text-sm">{alert.unit}</span>
                     <span className="text-slate-400 text-sm">{alert.parameter}</span>
+                    <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded">
+                      {alert.standardName || standard.name}
+                    </span>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-red-300 text-sm font-mono">

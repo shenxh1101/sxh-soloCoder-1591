@@ -37,14 +37,21 @@ export function Tank({ unitId, onClick }: TankProps) {
     const time = state.clock.elapsedTime;
     
     if (waterRef.current) {
-      waterRef.current.position.y = -unit.size.height / 2 + waterHeight / 2;
+      const baseY = -unit.size.height / 2 + waterHeight / 2;
+      const waveEffect = Math.sin(time * 2 + unit.position.x) * 0.05;
+      waterRef.current.position.y = baseY + waveEffect;
       waterRef.current.scale.y = waterScale;
+      
+      const waterMaterial = waterRef.current.material as THREE.MeshStandardMaterial;
+      const qualityFactor = Math.max(0, Math.min(1, (unit.waterQuality.cod - 5) / 295));
+      waterMaterial.emissiveIntensity = 0.3 + qualityFactor * 0.4 + Math.sin(time * 1.5) * 0.1;
     }
 
     if (alertRef.current && unit.isAlert) {
-      const pulse = 0.5 + Math.sin(time * 4) * 0.5;
+      const pulse = 0.5 + Math.sin(time * 6) * 0.5;
       const material = alertRef.current.material as THREE.MeshBasicMaterial;
-      material.opacity = 0.3 + pulse * 0.4;
+      material.opacity = 0.2 + pulse * 0.6;
+      alertRef.current.scale.setScalar(1 + pulse * 0.05);
     }
 
     if (meshRef.current && isSelected) {
@@ -53,7 +60,10 @@ export function Tank({ unitId, onClick }: TankProps) {
 
     if (unitId === 'aerationTank' && waterRef.current) {
       const aerationEffect = aerationIntensity / 100;
-      waterRef.current.position.y += Math.sin(time * 3) * 0.02 * aerationEffect;
+      waterRef.current.position.y += Math.sin(time * 5) * 0.05 * aerationEffect;
+      
+      const waterMaterial = waterRef.current.material as THREE.MeshStandardMaterial;
+      waterMaterial.opacity = 0.5 + Math.sin(time * 4) * 0.1 * aerationEffect;
     }
   });
 

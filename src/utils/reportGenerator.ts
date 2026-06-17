@@ -53,18 +53,19 @@ function interpolateQualityForHour(
   };
 }
 
-export function exportReportToCSV(report: DailyReport): string {
+export function exportReportToCSV(report: DailyReport, standard: DischargeStandard): string {
   const header = ['指标', '进水', '出水', '去除率(%)', '排放标准'];
   
   const rows = [
-    ['COD (mg/L)', report.inletQuality.cod.toFixed(1), report.outletQuality.cod.toFixed(1), report.treatmentEfficiency.cod.toFixed(1), '50'],
-    ['氨氮 (mg/L)', report.inletQuality.ammoniaNitrogen.toFixed(1), report.outletQuality.ammoniaNitrogen.toFixed(1), report.treatmentEfficiency.ammoniaNitrogen.toFixed(1), '5'],
-    ['总磷 (mg/L)', report.inletQuality.totalPhosphorus.toFixed(2), report.outletQuality.totalPhosphorus.toFixed(2), report.treatmentEfficiency.totalPhosphorus.toFixed(1), '0.5'],
-    ['pH', report.inletQuality.ph.toFixed(1), report.outletQuality.ph.toFixed(1), '-', '6-9'],
+    ['COD (mg/L)', report.inletQuality.cod.toFixed(1), report.outletQuality.cod.toFixed(1), report.treatmentEfficiency.cod.toFixed(1), standard.cod.toString()],
+    ['氨氮 (mg/L)', report.inletQuality.ammoniaNitrogen.toFixed(1), report.outletQuality.ammoniaNitrogen.toFixed(1), report.treatmentEfficiency.ammoniaNitrogen.toFixed(1), standard.ammoniaNitrogen.toString()],
+    ['总磷 (mg/L)', report.inletQuality.totalPhosphorus.toFixed(2), report.outletQuality.totalPhosphorus.toFixed(2), report.treatmentEfficiency.totalPhosphorus.toFixed(1), standard.totalPhosphorus.toString()],
+    ['pH', report.inletQuality.ph.toFixed(1), report.outletQuality.ph.toFixed(1), '-', `${standard.phMin}-${standard.phMax}`],
   ];
 
   const csvContent = [
     `污水处理厂运行日报 - ${report.date}`,
+    `执行标准: ${standard.name}`,
     '',
     `总处理量: ${report.totalInflow.toFixed(0)} m³`,
     `达标率: ${report.complianceRate.toFixed(1)} %`,
@@ -73,7 +74,7 @@ export function exportReportToCSV(report: DailyReport): string {
     ...rows.map(r => r.join(',')),
     '',
     '超标记录:',
-    ...report.alertRecords.map(a => `${new Date(a.timestamp).toLocaleTimeString()},${a.unit},${a.parameter},${a.value.toFixed(1)},${a.limit.toFixed(1)}`),
+    ...report.alertRecords.map(a => `${new Date(a.timestamp).toLocaleTimeString()},${a.unit},${a.parameter},${a.value.toFixed(1)},${a.limit.toFixed(1)},${a.standardName || standard.name}`),
   ].join('\n');
 
   return csvContent;
