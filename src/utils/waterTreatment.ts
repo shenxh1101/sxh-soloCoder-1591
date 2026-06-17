@@ -1,5 +1,5 @@
-import { WaterQuality, DischargeStandard, TreatmentUnitType, AlertRecord } from '../types';
-import { TREATMENT_EFFICIENCY, TREATMENT_UNIT_ORDER, SIMULATION_CONFIG } from './constants';
+import { WaterQuality, DischargeStandard, TreatmentUnitType, AlertRecord, ParameterType } from '../types';
+import { TREATMENT_EFFICIENCY, TREATMENT_UNIT_ORDER, SIMULATION_CONFIG, PARAMETER_INFO } from './constants';
 
 export function calculateTreatedWater(
   inletQuality: WaterQuality,
@@ -34,10 +34,17 @@ export function checkWaterQuality(
   const violations: AlertRecord[] = [];
   const name = standardName || standard.name;
 
+  const getParamInfo = (key: ParameterType) => {
+    return PARAMETER_INFO.find(p => p.key === key)!;
+  };
+
   if (quality.cod > standard.cod) {
+    const info = getParamInfo('cod');
     violations.push({
-      unit: '',
-      parameter: 'COD',
+      unit: 'disinfectionTank',
+      unitName: '',
+      parameter: 'cod',
+      parameterName: info.name,
       value: quality.cod,
       limit: standard.cod,
       timestamp: Date.now(),
@@ -46,9 +53,12 @@ export function checkWaterQuality(
   }
 
   if (quality.ammoniaNitrogen > standard.ammoniaNitrogen) {
+    const info = getParamInfo('ammoniaNitrogen');
     violations.push({
-      unit: '',
-      parameter: '氨氮',
+      unit: 'disinfectionTank',
+      unitName: '',
+      parameter: 'ammoniaNitrogen',
+      parameterName: info.name,
       value: quality.ammoniaNitrogen,
       limit: standard.ammoniaNitrogen,
       timestamp: Date.now(),
@@ -57,9 +67,12 @@ export function checkWaterQuality(
   }
 
   if (quality.totalPhosphorus > standard.totalPhosphorus) {
+    const info = getParamInfo('totalPhosphorus');
     violations.push({
-      unit: '',
-      parameter: '总磷',
+      unit: 'disinfectionTank',
+      unitName: '',
+      parameter: 'totalPhosphorus',
+      parameterName: info.name,
       value: quality.totalPhosphorus,
       limit: standard.totalPhosphorus,
       timestamp: Date.now(),
@@ -68,9 +81,12 @@ export function checkWaterQuality(
   }
 
   if (quality.ph < standard.phMin || quality.ph > standard.phMax) {
+    const info = getParamInfo('ph');
     violations.push({
-      unit: '',
-      parameter: 'pH',
+      unit: 'disinfectionTank',
+      unitName: '',
+      parameter: 'ph',
+      parameterName: info.name,
       value: quality.ph,
       limit: quality.ph < standard.phMin ? standard.phMin : standard.phMax,
       timestamp: Date.now(),

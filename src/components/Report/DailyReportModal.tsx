@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Download, FileText, TrendingUp, AlertTriangle, BarChart3, Calendar, ArrowLeftRight } from 'lucide-react';
+import { Download, FileText, TrendingUp, TrendingDown, AlertTriangle, BarChart3, Calendar, ArrowLeftRight, Lightbulb, Minus } from 'lucide-react';
 import { Modal } from '../UI/Modal';
 import { useSimulationStore } from '../../store/useSimulationStore';
-import { exportReportToCSV, downloadCSV, generateReportSummary, exportHistoricalReportToCSV } from '../../utils/reportGenerator';
+import { exportReportToCSV, downloadCSV, generateReportSummary, exportHistoricalReportToCSV, analyzeComplianceTrend } from '../../utils/reportGenerator';
 import { formatNumber } from '../../utils/waterTreatment';
-import { HistoricalReport } from '../../types';
+import { HistoricalReport, TrendAnalysis } from '../../types';
 
 interface DailyReportModalProps {
   isOpen: boolean;
@@ -20,9 +20,9 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
 
   if (!report) return null;
 
-  const allReports: HistoricalReport[] = [
-    ...historicalReports,
-    {
+  const allReports: HistoricalReport[] = (() => {
+    const deduped = historicalReports.filter(h => h.date !== report.date);
+    const todayReport: HistoricalReport = {
       date: report.date,
       totalInflow: report.totalInflow,
       totalOutflow: report.totalOutflow,
@@ -31,14 +31,30 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
       complianceRate: report.complianceRate,
       treatmentEfficiency: { ...report.treatmentEfficiency },
       alertCount: report.alertRecords.length,
-    },
-  ].slice(-7);
+    };
+    const merged = [...deduped, todayReport];
+    const sorted = merged.sort((a, b) => {
+      const dateA = new Date(a.date.replace(/\//g, '-'));
+      const dateB = new Date(b.date.replace(/\//g, '-'));
+      return dateA.getTime() - dateB.getTime();
+    });
+    return sorted.slice(-7);
+  })();
+
+  const trendAnalysis: TrendAnalysis = analyzeComplianceTrend(allReports);
 
   const handleExport = () => {
-    const csvContent = reportTab === 'summary' 
+    const csvContent = reportTab === 'summary'
       ? exportReportToCSV(report, standard)
       : exportHistoricalReportToCSV(allReports, standard);
-    downloadCSV(csvContent, `污水处理日报_${report.date}.csv`);
+    const suffix = reportTab === 'summary' ? report.date : '历史对比';
+    downloadCSV(csvContent, `污水处理日报_${suffix}.csv`);
+  };
+
+  const getBarGradient = (rate: number): string => {
+    if (rate < 80) return 'from-red-500 to-red-400';
+    if (rate < 90) return 'from-yellow-500 to-yellow-400';
+    return 'from-emerald-500 to-emerald-400';
   };
 
   const getEfficiencyColor = (value: number) => {
@@ -245,8 +261,8 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
                       className="flex items-center justify-between bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-2"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-red-400 font-medium text-sm">{alert.unit}</span>
-                        <span className="text-slate-400 text-sm">{alert.parameter}</span>
+                        <span className="text-red-400 font-medium text-sm">{alert.unitName}</span>
+                        <span className="text-slate-400 text-sm">{alert.parameterName}</span>
                         <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded">
                           {alert.standardName || standard.name}
                         </span>
@@ -277,6 +293,53 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
               </div>
             </div>
 
+            <div className={`rounded-xl p-5 border ${
+              trendAnalysis.direction === 'improving'
+                ? 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-500/30'
+                : trendAnalysis.direction === 'worsening'
+                  ? 'bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30'
+                  : 'bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border-yellow-500/30'
+            }`}>
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-xl ${
+                    trendAnalysis.direction === 'improving'
+                      ? 'bg-emerald-500/20'
+                      : trendAnalysis.direction === 'worsening'
+                        ? 'bg-red-500/20'
+                        : 'bg-yellow-500/20'
+                  }`}>
+                    {trendAnalysis.direction === 'improving' ? (
+                      <TrendingUp className="text-emerald-400" size={28} />
+                    ) : trendAnalysis.direction === 'worsening' ? (
+                      <TrendingDown className="text-red-400" size={28} />
+                    ) : (
+                      <Minus className="text-yellow-400" size={28} />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-bold text-white">达标率趋势分析</h3>
+                      <span className={`text-2xl font-bold font-mono ${
+                        trendAnalysis.direction === 'improving'
+                          ? 'text-emerald-400'
+                          : trendAnalysis.direction === 'worsening'
+                            ? 'text-red-400'
+                            : 'text-yellow-400'
+                      }`}>
+                        {trendAnalysis.changeRate >= 0 ? '+' : ''}{trendAnalysis.changeRate.toFixed(1)}%
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-sm leading-relaxed">{trendAnalysis.summary}</p>
+                    <div className="flex items-start gap-2 mt-2">
+                      <Lightbulb className="text-amber-400 flex-shrink-0 mt-0.5" size={16} />
+                      <p className="text-slate-300 text-sm leading-relaxed">{trendAnalysis.suggestion}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div>
               <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
                 <Calendar size={16} className="text-blue-400" />
@@ -300,7 +363,7 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
                       const isToday = index === allReports.length - 1;
                       const prevCompliance = index > 0 ? allReports[index - 1].complianceRate : undefined;
                       return (
-                        <tr 
+                        <tr
                           key={item.date}
                           className={isToday ? 'bg-cyan-500/5' : ''}
                         >
@@ -370,9 +433,9 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
                                 <span className={getEfficiencyColor(eff)}>{eff.toFixed(1)}%</span>
                               </div>
                               <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className="h-full rounded-full transition-all"
-                                  style={{ 
+                                  style={{
                                     width: `${barWidth}%`,
                                     backgroundColor: paramColors[param],
                                     opacity: 0.8,
@@ -400,11 +463,12 @@ export function DailyReportModal({ isOpen, onClose }: DailyReportModalProps) {
                     const maxInflow = Math.max(...allReports.map(r => r.totalInflow));
                     const heightPct = (item.totalInflow / maxInflow) * 100;
                     const isToday = item.date === allReports[allReports.length - 1].date;
+                    const gradientClass = getBarGradient(item.complianceRate);
                     return (
                       <div key={item.date} className="flex-1 flex flex-col items-center gap-1">
                         <span className="text-xs text-slate-500">{formatNumber(item.totalInflow, 0)}</span>
-                        <div 
-                          className={`w-full rounded-t transition-all ${isToday ? 'bg-gradient-to-t from-cyan-500 to-cyan-400' : 'bg-gradient-to-t from-slate-600 to-slate-500'}`}
+                        <div
+                          className={`w-full rounded-t transition-all bg-gradient-to-t ${isToday ? gradientClass + ' ring-2 ring-cyan-400/60' : gradientClass}`}
                           style={{ height: `${heightPct}%`, minHeight: '8px' }}
                         />
                         <span className={`text-xs ${isToday ? 'text-cyan-400 font-bold' : 'text-slate-500'}`}>

@@ -38,8 +38,10 @@ export interface DischargeStandard {
 }
 
 export interface AlertRecord {
-  unit: string;
-  parameter: string;
+  unit: TreatmentUnitType;
+  unitName: string;
+  parameter: ParameterType;
+  parameterName: string;
   value: number;
   limit: number;
   timestamp: number;
@@ -116,6 +118,16 @@ export interface AlertFilter {
   parameter: ParameterType | 'all';
 }
 
+export interface AlertDisposalInfo {
+  parameter: string;
+  parameterName: string;
+  unit: TreatmentUnitType;
+  unitName: string;
+  causes: string[];
+  suggestions: string[];
+  severity: 'low' | 'medium' | 'high';
+}
+
 export interface HistoricalReport {
   date: string;
   totalInflow: number;
@@ -129,6 +141,34 @@ export interface HistoricalReport {
     totalPhosphorus: number;
   };
   alertCount: number;
+}
+
+export interface TrendAnalysis {
+  direction: 'improving' | 'worsening' | 'stable';
+  changeRate: number;
+  consecutiveDays: number;
+  summary: string;
+  suggestion: string;
+}
+
+export interface TimelineKeyframe {
+  id: string;
+  timestamp: number;
+  snapshotTime: number;
+  inflowRate: number;
+  aerationIntensity: number;
+  dailyTreatmentVolume: number;
+  units: Record<TreatmentUnitType, TreatmentUnit>;
+  alertRecords: AlertRecord[];
+  dailyReport: DailyReport | null;
+  qualityHistory: WaterQualityHistory[];
+}
+
+export interface SnapshotTimeline {
+  id: string;
+  name: string;
+  createdAt: number;
+  keyframes: TimelineKeyframe[];
 }
 
 export interface SimulationState {
@@ -154,4 +194,10 @@ export interface SimulationState {
   showAlertCenter: boolean;
   historicalReports: HistoricalReport[];
   reportTab: 'summary' | 'history';
+  timelines: SnapshotTimeline[];
+  activeTimelineId: string | null;
+  currentKeyframeIndex: number;
+  isTimelinePlaying: boolean;
+  timelineSpeed: 1 | 2 | 4;
+  selectedAlert: AlertRecord | null;
 }

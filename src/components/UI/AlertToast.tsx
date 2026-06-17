@@ -33,11 +33,11 @@ export function AlertToast() {
           <AlertTriangle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-red-400">{alert.unit}</span>
+              <span className="font-bold text-red-400">{alert.unitName}</span>
               <span className="text-red-300 text-sm">超标警报</span>
             </div>
             <p className="text-sm text-red-200 mt-1">
-              {alert.parameter}: {alert.value.toFixed(1)} (限值: {alert.limit.toFixed(1)})
+              {alert.parameterName}: {alert.value.toFixed(1)} (限值: {alert.limit.toFixed(1)})
             </p>
             <p className="text-xs text-red-300/60 mt-1">
               {formatDateTime(alert.timestamp)}
