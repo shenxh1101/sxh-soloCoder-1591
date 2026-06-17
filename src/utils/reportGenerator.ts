@@ -1,4 +1,4 @@
-import { DailyReport, WaterQuality, AlertRecord, WaterQualityHistory } from '../types';
+import { DailyReport, WaterQuality, AlertRecord, WaterQualityHistory, HistoricalReport } from '../types';
 import { calculateTreatmentEfficiency, calculateComplianceRate } from './waterTreatment';
 import { DischargeStandard } from '../types';
 
@@ -102,4 +102,61 @@ export function generateReportSummary(report: DailyReport): string {
     总磷去除率${report.treatmentEfficiency.totalPhosphorus.toFixed(1)}%。
     ${report.alertRecords.length > 0 ? `发生${report.alertRecords.length}次超标事件。` : '未发生超标事件。'}
   `.trim();
+}
+
+export function exportHistoricalReportToCSV(
+  historicalReports: HistoricalReport[],
+  standard: DischargeStandard
+): string {
+  const header = [
+    '日期',
+    '处理量(m³)',
+    '进水COD',
+    '出水COD',
+    'COD限值',
+    '进水氨氮',
+    '出水氨氮',
+    '氨氮限值',
+    '进水总磷',
+    '出水总磷',
+    '总磷限值',
+    '达标率(%)',
+    '超标次数',
+    'COD去除率(%)',
+    '氨氮去除率(%)',
+    '总磷去除率(%)',
+  ];
+
+  const rows = historicalReports.map(r => [
+    r.date,
+    r.totalInflow.toFixed(0),
+    r.inletQuality.cod.toFixed(1),
+    r.outletQuality.cod.toFixed(1),
+    standard.cod.toString(),
+    r.inletQuality.ammoniaNitrogen.toFixed(1),
+    r.outletQuality.ammoniaNitrogen.toFixed(1),
+    standard.ammoniaNitrogen.toString(),
+    r.inletQuality.totalPhosphorus.toFixed(2),
+    r.outletQuality.totalPhosphorus.toFixed(2),
+    standard.totalPhosphorus.toString(),
+    r.complianceRate.toFixed(1),
+    r.alertCount.toString(),
+    r.treatmentEfficiency.cod.toFixed(1),
+    r.treatmentEfficiency.ammoniaNitrogen.toFixed(1),
+    r.treatmentEfficiency.totalPhosphorus.toFixed(1),
+  ]);
+
+  const csvContent = [
+    `污水处理厂运行日报 - 历史对比数据`,
+    `执行标准: ${standard.name}`,
+    `生成日期: ${new Date().toLocaleDateString('zh-CN')}`,
+    '',
+    header.join(','),
+    ...rows.map(r => r.join(',')),
+    '',
+    '说明:',
+    '本报告包含最近7天的运行数据对比，用于趋势分析和教学复盘',
+  ].join('\n');
+
+  return csvContent;
 }

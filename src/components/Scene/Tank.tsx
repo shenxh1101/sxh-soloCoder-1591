@@ -15,9 +15,11 @@ export function Tank({ unitId, onClick }: TankProps) {
   const edgesRef = useRef<THREE.LineSegments>(null);
   const waterRef = useRef<THREE.Mesh>(null);
   const alertRef = useRef<THREE.Mesh>(null);
+  const highlightRef = useRef<THREE.Mesh>(null);
   
   const unit = useSimulationStore((state) => state.units[unitId]);
   const isSelected = useSimulationStore((state) => state.selectedUnit === unitId);
+  const isHighlighted = useSimulationStore((state) => state.highlightedUnit === unitId);
   const isTeachingMode = useSimulationStore((state) => state.isTeachingMode);
   const aerationIntensity = useSimulationStore((state) => state.aerationIntensity);
 
@@ -52,6 +54,13 @@ export function Tank({ unitId, onClick }: TankProps) {
       const material = alertRef.current.material as THREE.MeshBasicMaterial;
       material.opacity = 0.2 + pulse * 0.6;
       alertRef.current.scale.setScalar(1 + pulse * 0.05);
+    }
+
+    if (highlightRef.current && isHighlighted) {
+      const pulse = 0.5 + Math.sin(time * 4) * 0.5;
+      const material = highlightRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.15 + pulse * 0.35;
+      highlightRef.current.scale.setScalar(1.08 + pulse * 0.04);
     }
 
     if (meshRef.current && isSelected) {
@@ -146,6 +155,24 @@ export function Tank({ unitId, onClick }: TankProps) {
           />
           <meshBasicMaterial
             color="#e71d36"
+            transparent
+            opacity={0.3}
+            side={THREE.BackSide}
+          />
+        </mesh>
+      )}
+
+      {isHighlighted && !unit.isAlert && (
+        <mesh ref={highlightRef}>
+          <boxGeometry
+            args={[
+              unit.size.width + 0.4,
+              unit.size.height + 0.4,
+              unit.size.depth + 0.4,
+            ]}
+          />
+          <meshBasicMaterial
+            color="#fbbf24"
             transparent
             opacity={0.3}
             side={THREE.BackSide}

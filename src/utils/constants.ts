@@ -1,4 +1,4 @@
-import { TreatmentUnitType, DischargeStandard, ParameterInfo, TreatmentUnit } from '../types';
+import { TreatmentUnitType, DischargeStandard, ParameterInfo, TreatmentUnit, ScenarioPreset } from '../types';
 
 export const TREATMENT_UNIT_ORDER: TreatmentUnitType[] = [
   'grate',
@@ -186,3 +186,46 @@ export const COLORS = {
   success: '#2ec4b6',
   warning: '#ff9f1c',
 };
+
+export const SCENARIO_PRESETS: ScenarioPreset[] = [
+  {
+    id: 'normal',
+    name: '正常运行',
+    description: '标准工况下的稳定运行状态，处理效果良好',
+    icon: 'check',
+    inflowRate: 100,
+    aerationIntensity: 70,
+    inletQuality: { cod: 300, ammoniaNitrogen: 35, totalPhosphorus: 4, ph: 7.2 },
+    isRunning: true,
+  },
+  {
+    id: 'shockLoad',
+    name: '进水冲击',
+    description: '高浓度进水冲击，污染物浓度突然升高导致处理负荷剧增',
+    icon: 'zap',
+    inflowRate: 180,
+    aerationIntensity: 80,
+    inletQuality: { cod: 550, ammoniaNitrogen: 70, totalPhosphorus: 8, ph: 6.8 },
+    isRunning: true,
+  },
+  {
+    id: 'lowAeration',
+    name: '曝气不足',
+    description: '曝气设备故障或供氧量不足，微生物处理能力下降',
+    icon: 'wind',
+    inflowRate: 100,
+    aerationIntensity: 15,
+    inletQuality: { cod: 300, ammoniaNitrogen: 35, totalPhosphorus: 4, ph: 7.2 },
+    isRunning: true,
+  },
+  {
+    id: 'powerRecovery',
+    name: '停电恢复',
+    description: '长时间停电后恢复供电，各单元水质恶化需逐步恢复',
+    icon: 'battery',
+    inflowRate: 50,
+    aerationIntensity: 40,
+    inletQuality: { cod: 420, ammoniaNitrogen: 55, totalPhosphorus: 6, ph: 6.5 },
+    isRunning: true,
+  },
+];

@@ -66,22 +66,6 @@ export interface DailyReport {
   }[];
 }
 
-export interface SimulationState {
-  inflowRate: number;
-  aerationIntensity: number;
-  isRunning: boolean;
-  isTeachingMode: boolean;
-  simulationTime: number;
-  dailyTreatmentVolume: number;
-  units: Record<TreatmentUnitType, TreatmentUnit>;
-  standard: DischargeStandard;
-  dailyReport: DailyReport | null;
-  alertRecords: AlertRecord[];
-  selectedUnit: TreatmentUnitType | null;
-  showStandardConfig: boolean;
-  showDailyReport: boolean;
-}
-
 export interface WaterQualityHistory {
   timestamp: number;
   unitId: TreatmentUnitType;
@@ -96,4 +80,78 @@ export interface ParameterInfo {
   unit: string;
   color: string;
   description: string;
+}
+
+export type ScenarioPresetType = 'normal' | 'shockLoad' | 'lowAeration' | 'powerRecovery';
+
+export interface ScenarioPreset {
+  id: ScenarioPresetType;
+  name: string;
+  description: string;
+  icon: string;
+  inflowRate: number;
+  aerationIntensity: number;
+  inletQuality: WaterQuality;
+  isRunning: boolean;
+}
+
+export interface SimulationSnapshot {
+  id: string;
+  name: string;
+  timestamp: number;
+  date: string;
+  inflowRate: number;
+  aerationIntensity: number;
+  simulationTime: number;
+  dailyTreatmentVolume: number;
+  units: Record<TreatmentUnitType, TreatmentUnit>;
+  standard: DischargeStandard;
+  alertRecords: AlertRecord[];
+  qualityHistory: WaterQualityHistory[];
+  dailyReport: DailyReport | null;
+}
+
+export interface AlertFilter {
+  unitId: TreatmentUnitType | 'all';
+  parameter: ParameterType | 'all';
+}
+
+export interface HistoricalReport {
+  date: string;
+  totalInflow: number;
+  totalOutflow: number;
+  inletQuality: WaterQuality;
+  outletQuality: WaterQuality;
+  complianceRate: number;
+  treatmentEfficiency: {
+    cod: number;
+    ammoniaNitrogen: number;
+    totalPhosphorus: number;
+  };
+  alertCount: number;
+}
+
+export interface SimulationState {
+  inflowRate: number;
+  aerationIntensity: number;
+  isRunning: boolean;
+  isTeachingMode: boolean;
+  simulationTime: number;
+  dailyTreatmentVolume: number;
+  units: Record<TreatmentUnitType, TreatmentUnit>;
+  standard: DischargeStandard;
+  dailyReport: DailyReport | null;
+  alertRecords: AlertRecord[];
+  selectedUnit: TreatmentUnitType | null;
+  showStandardConfig: boolean;
+  showDailyReport: boolean;
+  highlightedUnit: TreatmentUnitType | null;
+  activeScenario: ScenarioPresetType | null;
+  snapshots: SimulationSnapshot[];
+  activeSnapshotId: string | null;
+  isReplaying: boolean;
+  alertFilter: AlertFilter;
+  showAlertCenter: boolean;
+  historicalReports: HistoricalReport[];
+  reportTab: 'summary' | 'history';
 }

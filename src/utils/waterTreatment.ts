@@ -164,12 +164,14 @@ export function getNextUnit(unitId: TreatmentUnitType): TreatmentUnitType | null
   return index < TREATMENT_UNIT_ORDER.length - 1 ? TREATMENT_UNIT_ORDER[index + 1] : null;
 }
 
-export function generateRandomInletQuality(): WaterQuality {
+export function generateRandomInletQuality(baseInlet?: WaterQuality): WaterQuality {
+  const base = baseInlet || { cod: 300, ammoniaNitrogen: 35, totalPhosphorus: 4, ph: 7.2 };
+  const variation = 0.1;
   return {
-    cod: 250 + Math.random() * 100,
-    ammoniaNitrogen: 30 + Math.random() * 15,
-    totalPhosphorus: 3 + Math.random() * 2,
-    ph: 6.5 + Math.random() * 1.5,
+    cod: base.cod * (1 - variation + Math.random() * variation * 2),
+    ammoniaNitrogen: base.ammoniaNitrogen * (1 - variation + Math.random() * variation * 2),
+    totalPhosphorus: base.totalPhosphorus * (1 - variation + Math.random() * variation * 2),
+    ph: Math.max(6, Math.min(9, base.ph + (Math.random() - 0.5) * 0.4)),
   };
 }
 

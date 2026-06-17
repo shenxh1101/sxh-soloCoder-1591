@@ -3,9 +3,12 @@ import { TreatmentPlant } from '../components/Scene/TreatmentPlant';
 import { ParameterControls } from '../components/ControlPanel/ParameterControls';
 import { StandardConfig } from '../components/ControlPanel/StandardConfig';
 import { TeachingMode } from '../components/ControlPanel/TeachingMode';
+import { ScenarioPanel } from '../components/ControlPanel/ScenarioPanel';
 import { WaterQualityPanel } from '../components/WaterQualityPanel/WaterQualityPanel';
 import { DailyReportModal } from '../components/Report/DailyReportModal';
 import { AlertToast } from '../components/UI/AlertToast';
+import { AlertCenter } from '../components/AlertCenter/AlertCenter';
+import { SnapshotPanel } from '../components/Snapshot/SnapshotPanel';
 import { useSimulationStore } from '../store/useSimulationStore';
 import { useSimulationLoop } from '../hooks/useSimulationLoop';
 
@@ -14,6 +17,7 @@ export default function Home() {
   const showDailyReport = useSimulationStore((state) => state.showDailyReport);
   const selectedUnit = useSimulationStore((state) => state.selectedUnit);
   const isTeachingMode = useSimulationStore((state) => state.isTeachingMode);
+  const showAlertCenter = useSimulationStore((state) => state.showAlertCenter);
   
   const setShowStandardConfig = useSimulationStore((state) => state.setShowStandardConfig);
   const setShowDailyReport = useSimulationStore((state) => state.setShowDailyReport);
@@ -36,7 +40,7 @@ export default function Home() {
           3D 污水处理厂工艺流程模拟系统
         </h1>
         <p className="text-slate-400 text-sm mt-1">
-          实时监测 · 参数控制 · 教学演示
+          实时监测 · 参数控制 · 教学演示 · 工况模拟 · 数据复盘
         </p>
       </div>
 
@@ -49,6 +53,10 @@ export default function Home() {
         onGenerateReport={generateReport}
       />
 
+      <ScenarioPanel />
+
+      <SnapshotPanel />
+
       <WaterQualityPanel />
 
       <AlertToast />
@@ -59,6 +67,8 @@ export default function Home() {
           onClose={() => selectUnit(null)}
         />
       )}
+
+      {showAlertCenter && <AlertCenter />}
 
       <StandardConfig
         isOpen={showStandardConfig}
