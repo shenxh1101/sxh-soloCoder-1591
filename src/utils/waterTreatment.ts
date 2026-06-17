@@ -1,0 +1,166 @@
+import { WaterQuality, DischargeStandard, TreatmentUnitType, AlertRecord } from '../types';
+import { TREATMENT_EFFICIENCY, TREATMENT_UNIT_ORDER, SIMULATION_CONFIG } from './constants';
+
+export function calculateTreatedWater(
+  inletQuality: WaterQuality,
+  unitType: TreatmentUnitType,
+  aerationIntensity: number
+): WaterQuality {
+  const baseEfficiency = TREATMENT_EFFICIENCY[unitType];
+  const aerationFactor = unitType === 'aerationTank' ? 0.5 + (aerationIntensity / 100) * 0.5 : 1;
+
+  const codRemoval = baseEfficiency.cod * aerationFactor;
+  const ammoniaRemoval = baseEfficiency.ammoniaNitrogen * aerationFactor;
+  const phosphorusRemoval = baseEfficiency.totalPhosphorus * aerationFactor;
+
+  return {
+    cod: Math.max(5, inletQuality.cod * (1 - codRemoval)),
+    ammoniaNitrogen: Math.max(0.1, inletQuality.ammoniaNitrogen * (1 - ammoniaRemoval)),
+    totalPhosphorus: Math.max(0.05, inletQuality.totalPhosphorus * (1 - phosphorusRemoval)),
+    ph: inletQuality.ph + (Math.random() - 0.5) * 0.2,
+  };
+}
+
+export function checkWaterQuality(
+  quality: WaterQuality,
+  standard: DischargeStandard
+): { isCompliant: boolean; violations: AlertRecord[] } {
+  const violations: AlertRecord[] = [];
+
+  if (quality.cod > standard.cod) {
+    violations.push({
+      unit: '',
+      parameter: 'COD',
+      value: quality.cod,
+      limit: standard.cod,
+      timestamp: Date.now(),
+    });
+  }
+
+  if (quality.ammoniaNitrogen > standard.ammoniaNitrogen) {
+    violations.push({
+      unit: '',
+      parameter: '氨氮',
+      value: quality.ammoniaNitrogen,
+      limit: standard.ammoniaNitrogen,
+      timestamp: Date.now(),
+    });
+  }
+
+  if (quality.totalPhosphorus > standard.totalPhosphorus) {
+    violations.push({
+      unit: '',
+      parameter: '总磷',
+      value: quality.totalPhosphorus,
+      limit: standard.totalPhosphorus,
+      timestamp: Date.now(),
+    });
+  }
+
+  if (quality.ph < standard.phMin || quality.ph > standard.phMax) {
+    violations.push({
+      unit: '',
+      parameter: 'pH',
+      value: quality.ph,
+      limit: quality.ph < standard.phMin ? standard.phMin : standard.phMax,
+      timestamp: Date.now(),
+    });
+  }
+
+  return {
+    isCompliant: violations.length === 0,
+    violations,
+  };
+}
+
+export function calculateTreatmentEfficiency(
+  inletQuality: WaterQuality,
+  outletQuality: WaterQuality
+): { cod: number; ammoniaNitrogen: number; totalPhosphorus: number } {
+  return {
+    cod: ((inletQuality.cod - outletQuality.cod) / inletQuality.cod) * 100,
+    ammoniaNitrogen: ((inletQuality.ammoniaNitrogen - outletQuality.ammoniaNitrogen) / inletQuality.ammoniaNitrogen) * 100,
+    totalPhosphorus: ((inletQuality.totalPhosphorus - outletQuality.totalPhosphorus) / inletQuality.totalPhosphorus) * 100,
+  };
+}
+
+export function calculateComplianceRate(
+  samples: { quality: WaterQuality; standard: DischargeStandard }[]
+): number {
+  if (samples.length === 0) return 100;
+
+  const compliantSamples = samples.filter(
+    ({ quality, standard }) => checkWaterQuality(quality, standard).isCompliant
+  );
+
+  return (compliantSamples.length / samples.length) * 100;
+}
+
+export function getWaterColor(cod: number): string {
+  const normalizedCod = Math.min(1, Math.max(0, (cod - 5) / 295));
+  const r = Math.round(139 - normalizedCod * 80);
+  const g = Math.round(69 + normalizedCod * 127);
+  const b = Math.round(19 + normalizedCod * 100);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+export function interpolateWaterQuality(
+  from: WaterQuality,
+  to: WaterQuality,
+  progress: number
+): WaterQuality {
+  return {
+    cod: from.cod + (to.cod - from.cod) * progress,
+    ammoniaNitrogen: from.ammoniaNitrogen + (to.ammoniaNitrogen - from.ammoniaNitrogen) * progress,
+    totalPhosphorus: from.totalPhosphorus + (to.totalPhosphorus - from.totalPhosphorus) * progress,
+    ph: from.ph + (to.ph - from.ph) * progress,
+  };
+}
+
+export function calculateWaterLevelChange(
+  currentLevel: number,
+  maxLevel: number,
+  inflowRate: number
+): number {
+  const targetLevel = (inflowRate / SIMULATION_CONFIG.maxInflowRate) * maxLevel * 0.85;
+  const diff = targetLevel - currentLevel;
+  return currentLevel + diff * SIMULATION_CONFIG.waterLevelChangeRate;
+}
+
+export function getUnitOrder(): TreatmentUnitType[] {
+  return [...TREATMENT_UNIT_ORDER];
+}
+
+export function getPreviousUnit(unitId: TreatmentUnitType): TreatmentUnitType | null {
+  const index = TREATMENT_UNIT_ORDER.indexOf(unitId);
+  return index > 0 ? TREATMENT_UNIT_ORDER[index - 1] : null;
+}
+
+export function getNextUnit(unitId: TreatmentUnitType): TreatmentUnitType | null {
+  const index = TREATMENT_UNIT_ORDER.indexOf(unitId);
+  return index < TREATMENT_UNIT_ORDER.length - 1 ? TREATMENT_UNIT_ORDER[index + 1] : null;
+}
+
+export function generateRandomInletQuality(): WaterQuality {
+  return {
+    cod: 250 + Math.random() * 100,
+    ammoniaNitrogen: 30 + Math.random() * 15,
+    totalPhosphorus: 3 + Math.random() * 2,
+    ph: 6.5 + Math.random() * 1.5,
+  };
+}
+
+export function formatNumber(value: number, decimals: number = 1): string {
+  return value.toFixed(decimals);
+}
+
+export function formatDateTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
