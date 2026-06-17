@@ -146,11 +146,10 @@ export function AlertCenter() {
   }, []);
 
   const filteredAlerts = useMemo(() => {
-    return [...alertRecords]
+    const result = [...alertRecords]
       .filter((alert) => {
         if (alertFilter.unitId !== 'all') {
-          const alertUnitId = unitNameToId[alert.unit];
-          if (alertUnitId !== alertFilter.unitId) return false;
+          if (alert.unit !== alertFilter.unitId) return false;
         }
         if (alertFilter.parameter !== 'all') {
           if (alert.parameter !== alertFilter.parameter) return false;
@@ -158,7 +157,13 @@ export function AlertCenter() {
         return true;
       })
       .sort((a, b) => b.timestamp - a.timestamp);
-  }, [alertRecords, alertFilter, unitNameToId]);
+
+    if (result.length === 0 && alertRecords.length > 0) {
+      console.debug('[AlertCenter] 筛选无结果, 条件=', alertFilter, ' 前3条样例=', alertRecords.slice(0, 3).map(a => ({unit: a.unit, parameter: a.parameter, unitName: a.unitName, parameterName: a.parameterName})));
+    }
+
+    return result;
+  }, [alertRecords, alertFilter]);
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -207,7 +212,7 @@ export function AlertCenter() {
 
   const handleViewUnitDetail = () => {
     if (selectedAlert) {
-      const unitId = unitNameToId[selectedAlert.unit];
+      const unitId: TreatmentUnitType | undefined = selectedAlert.unit;
       if (unitId) {
         selectUnit(unitId);
       }
@@ -221,14 +226,14 @@ export function AlertCenter() {
 
   const disposalInfo: AlertDisposalInfo | null = useMemo(() => {
     if (!selectedAlert) return null;
-    const unitId = unitNameToId[selectedAlert.unit];
+    const unitId: TreatmentUnitType | undefined = selectedAlert.unit;
     if (!unitId) return null;
     return getAlertDisposalInfo(unitId, selectedAlert.parameter, selectedAlert.value, selectedAlert.limit);
-  }, [selectedAlert, unitNameToId]);
+  }, [selectedAlert]);
 
   const renderAlertRow = (alert: AlertRecord, index: number) => {
     const paramInfo = getParameterInfo(alert.parameter);
-    const alertUnitId = unitNameToId[alert.unit];
+    const alertUnitId = alert.unit;
     const isHighlighted = highlightedUnit === alertUnitId;
     const isSelected = selectedAlert?.timestamp === alert.timestamp && selectedAlert?.unit === alert.unit && selectedAlert?.parameter === alert.parameter;
 
@@ -270,7 +275,7 @@ export function AlertCenter() {
               <div className="mt-2 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-1.5 text-xs text-slate-400">
                   <MapPin size={12} className="text-slate-500 shrink-0" />
-                  <span>{alert.unit}</span>
+                  <span>{alert.unitName || UNIT_NAMES[alert.unit] || alert.unit}</span>
                 </div>
                 <div className="text-xs text-slate-500">
                   {formatTime(alert.timestamp)}

@@ -107,7 +107,9 @@ export function QualityCard({ unitId, isSelected, onClick }: QualityCardProps) {
     <div
       onClick={onClick}
       className={`relative flex-shrink-0 w-52 p-4 rounded-2xl cursor-pointer transition-all duration-300 ${
-        isAlert
+        isAlert && isSelected
+          ? 'bg-red-500/25 border-2 border-red-500/70 scale-105 shadow-[0_0_0_3px_rgba(34,211,238,0.35),0_0_30px_rgba(34,211,238,0.25)] ring-2 ring-cyan-400/60 ring-offset-1 ring-offset-slate-900/50'
+          : isAlert
           ? 'bg-red-500/20 border-2 border-red-500/60'
           : isSelected
           ? 'bg-slate-800/80 border-2 border-cyan-500/60 scale-105 shadow-lg shadow-cyan-500/20'
